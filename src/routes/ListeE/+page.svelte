@@ -1,0 +1,117 @@
+<script>
+
+    import { currentUser } from '../../stores/currentUser';
+    import { supabase } from '../../lib/supabaseClient';
+	import { onMount } from 'svelte';
+
+        // Utiliser la fonction $ pour rendre le magasin réactif
+        let userData = $currentUser;
+        console.log(userData);
+
+        // let etat = userData.etat
+        if (userData == {}) {
+            location.replace('/')
+        }
+        let errorInsertEns = false
+        let InsertEns = false
+        let nomEns = "";
+        let email = ""
+        let password = ""
+        let telephone = null
+        let allEData = []
+
+        async function allE() {
+            
+            let { data: enseignants, error } = await supabase
+            .from('eleves')
+            .select('*');
+
+            if (error) {
+                location.replace('/')
+            } else {
+                allEData = enseignants
+            }
+                    
+        }
+
+        onMount(async () => {
+            try {
+                allE()
+                
+            } catch (error) {
+                console.error('Erreur lors de la récupération des eleves:', error);
+            }
+        });
+
+        async function RechercherE(){
+            if (!nomEns) {
+                errorInsertEns = true
+                InsertEns = false
+                allE()
+                return;
+            }
+            
+            
+            let { data: enseignants, error } = await supabase
+            .from('eleves')
+            .select('*')
+            .ilike('nom', '%'+nomEns+'%')
+            .eq('etat', 1)
+                    
+            
+            if (error) {
+                errorInsertEns = true
+                InsertEns = false
+                allE()
+                console.log(error);
+                return;
+            }else{
+                errorInsertEns = false
+                allEData = enseignants
+                return;
+            }
+
+        }
+
+
+    function retour() {
+        location.replace('/DashboardAdmin')
+    }
+
+</script>
+
+<div class="w-[80%] h-screen items-center justify-center">
+    <h1 class="text-center font-bold text-3xl underline uppercase">smart learning</h1>
+    <div class="flex">
+        <button on:click={retour} class=" w-[40%] font-size-[1.5rem] bg-blue-700 text-white border-none mx-auto mt-2 hover:bg-transparent rounded-lg cursor-pointer p-1" type="button">Retour</button>
+    </div>
+        
+    <div class="h-[20%] flex-1 flex-col">
+        <form class="g-8 flex flex-col w-[400px] max-w-full mt-0 m-auto items-center justify-center">
+            {#if errorInsertEns}
+                <p class="text-red-500 text-sm text-center">Informations incorrectes</p>
+            {/if}
+            {#if InsertEns}
+                <p class="text-green-500 text-sm text-center">Un nouveau gérant ajouté</p>
+            {/if}
+            <label class="position-relative border-2 border-blue-700 rounded-lg mt-1">
+                <p class={nomEns ? "position absolute translate-y-[-55%] pointer-events-none text-white rounded-lg p-2 text-[0.4rem] font-semibold bg-blue-700 border-blue-300" : "position absolute translate-y-[-55%] pointer-events-none text-white rounded-lg p-2 text-[0.1rem] top-[50%] left-[6px] opacity-0"}>Nom</p>
+                <input bind:value={nomEns} class="w-full rounded-md focus:outline-none text-center p-[0px] bg-transparent text-white" type="text" placeholder="Nom">
+            </label>
+            <button on:click={RechercherE} class="font-size-[1.5rem] bg-blue-700 text-white border-none mt-2 w-[50%] hover:bg-transparent rounded-lg cursor-pointer p-1" type="button">Rechercher</button>
+        </form>
+        <div class=" flex-col border-blue-700 w-[80%] border-2 rounded-lg mx-auto mt-4">
+            {#each allEData as ens}
+                <div class="w-full mt-2 rounded-2xl h-[24%] border-x-1 border-blue-700 items-center justify-center text-center bg-gradient-to-r via-red-500 from-green-500 to-yellow-300 flex">
+                    <a href="/Eleves/{ens.id}" class="w-full h-full flex items-center justify-center"> 
+                        <div class={ens.etat == 1 ? "flex-1 items-center justify-center font-bold uppercase" :"flex-1 items-center justify-center underline" }>{ens.nom}</div>
+                    </a> 
+                </div>
+            {/each}
+            
+        
+        </div>
+    </div>
+   
+
+</div>
